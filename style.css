@@ -1,0 +1,46 @@
+body
+{
+	margin: 40px auto;
+	max-width: 1024px;
+	line-height: 1.6;
+	font-size: 18px;
+	color: #444;
+	padding: 0 10px;
+}
+
+h1, h2, h3
+{
+	line-height:1.2;
+}
+
+#leliel-img
+{
+	width: 256px;
+}
+
+.wrapper
+{
+	display: flex;
+	justify-content: space-between;
+}
+
+.content
+{
+	box-sizing: border-box;
+}
+
+#header-image > img
+{
+	width: 128px;
+	padding: 8px;
+}
+
+#carrousel > img
+{
+	width: 256px;
+}
+
+marquee > a > img
+{
+	height: 64px;
+}

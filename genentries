@@ -1,0 +1,12 @@
+#!/bin/sh
+
+for file in articles/*; do
+	if [ -f "$file" ]; then
+
+		time=$(stat -c %W "$file")
+		creation=$(date -d @"$time" "+%Y-%m-%d")
+		name=$(basename "$file" .html)
+
+		echo "				<li><p><a href=\"$file\">$name</a><em> - $creation</em></p></li>"
+	fi
+done
