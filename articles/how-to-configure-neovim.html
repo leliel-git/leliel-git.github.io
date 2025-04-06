@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<title>Leliel's Website</title>
+		<link href="../normalize.css" rel="stylesheet">
+		<link href="../style.css" rel="stylesheet">
+		<link href="../img/favicon.png" rel="icon">
+	</head>
+	<body>
+		<header>
+			<div id="header-image">
+				<img src="../img/neovim.svg" alt="neovim logo">
+				<img src="../img/lazy.svg" alt="lazy.nvim logo">
+			</div>
+			<h1>How to configure and extend Neovim</h1>
+			<p>
+				Most guides and videos about configuring Neovim fron scratch use <a href="https://github.com/wbthomason/packer.nvim">packer.nvim</a>, or any other deprecated Neovim plugin manager, or vimscript. That's why I'm doing this guide on <a href="lazy.folke.io">lazy.nvim</a>. I hope you like it.
+			</p>
+		</header>
+		<div class="content">
+			<h2>The plugin manager</h2>
+			<p>
+        As I said before, We're using <a href="https://lazy.folke.io">lazy.nvim</a>. A really good and actively mantained Neovim <a href="https://en.wikipedia.org/wiki/Plug-in">plugin</a> manager. So read the <a href="https://lazy.folke.io/installation">installation guide</a> (You are going to need <a href="https://git-scm.com">git</a> and <a href="https://luarocks.org">luarocks</a>). After you installed it, every time you open Neovim you might get an error. This is because there are no plugins installed yet. Don't worry about it, we'll install some plugins later. But first we might want to set our keymaps and basic Neovim settings, such as the line number. To do this, we'll create a new lua source file located in a new location inside the nvim configuration directory: <strong><em>~/.config/nvim/lua/core/</em></strong>, called as you want to call it. I will call it <strong><em>keymaps.lua</em></strong> (this is just for organization purposes, but you can do this in the <strong><em>~/.config/nvim/init.lua</em></strong> file if you want to).
+			</p>
+			<p>Inside the file, you can add any options you want to. Example:</p>
+
+			<pre><code>vim.opt.number = true -- Add line numbers
+vim.opt.relativenumber = true -- Add numbers to indicate each line's distance to the cursor</code></pre>
+
+			<p>There are lots of options you might want to try. But these are fine to begin with.</p>
+			<p>After you finished editing the file. You have to import it inside your <strong><em>~/.config/nvim/init.lua</em></strong> file.</p>
+
+			<pre><code>require("core.keymaps")
+require("config.lazy") -- Added by the lazy.nvim installation</code></pre>
+
+			<p>Now that this is done, we can begin to install plugins. We'll install <a href="https://github.com/nvim-treesitter/nvim-treesitter">nvim-treesitter</a> For better language-based syntax highlighting, and <a href="https://github.com/hrsh7th/nvim-cmp">nvim-cmp</a> and its dependencies, for code completion, path completion and other completions I can't remember.</p>
+			<h2 id="Highlighting">Highlighting</h2>
+      <p>We add a new lua source file to a new directory: <strong><em>~/.config/nvim/lua/plugins/</em></strong>, called <strong><em>treesitter.lua</em></strong>, in which we return a Lua object. Its first attribute is going to be a URL to the plugin's git repository. In this case, <q><a href="https://github.com/nvim-treesitter/nvim-treesitter">https://github.com/nvim-treesitter/nvim-treesitter</a></q>, but we can omit the github domain, and just write <q>nvim-treesitter/nvim-treesitter</q>. The next arguments are going to depend on how you want to configure the plugin. And we should read each plugin's guide on how it should be configured.</p>
+
+			<pre><code>return {
+	"nvim-treesitter/nvim-treesitter",
+	build = ":TSUpdate",
+	config = function () 
+		local configs = require("nvim-treesitter.configs")
+
+		configs.setup({
+			ensure_installed = { "c", "cpp", "lua", "javascript", "html", "css" },
+			sync_install = false,
+			highlight = { enable = true },
+			indent = { enable = true },
+		})
+	end
+}</code></pre>
+      <p>As you can see in this example of a minimal configuration, we have a build attribute whose value is <q>:TSUpdate</q>. This option makes nvim-treesitter check for the latest version of the <a href="https://en.wikipedia.org/wiki/Parsing#Computer_languages">parsers</a>. Then, we have a config function, in which we call the nvim-treesitter.configs's setup function, with an object as its only argument, enabling the parsers for the 6 languages (You can add more if you want to) and a few more options.</p>
+			<p>I insist, the options are different for each plugin, and you should reach each's documentation to see all the options you can play with.</p>
+
+			<h2>Autocompletion</h2>
+      <p>If you read the <a href="#Highlighting">Highlighting</a> section, you've read them all. Even though every plugin has a different set of options, the process of adding new plugins and configuring them is very similiar for all of them.</p>
+			<p>So, for autocompletion in neovim there is a lot of options available. I'm going to use <a href="https://github.com/hrsh7th/nvim-cmp">nvim-cmp</a>, because it just works flawlessly and gives you a lot of completion options.</p>
+			<p>Again, we create a new file in <strong><em>~/.config/nvim/lua/plugins</em></strong> called <strong><em>nvim-cmp.lua</em></strong>, and write a return statement of a Lua object inside it, but with different configuration options. Here's a simple example with a few.</p>
+			<pre><code>return {
+	"hrsh7th/nvim-cmp",
+	dependencies = {
+		"hrsh7th/cmp-nvim-lsp",
+		"hrsh7th/cmp-nvim-lua",
+		"hrsh7th/cmp-buffer",
+		"hrsh7th/cmp-path",
+		"L3MON4D3/LuaSnip",
+		"saadparwaiz1/cmp_luasnip",
+		"rafamadriz/friendly-snippets",
+	},
+	config = function()
+		local cmp = require("cmp")
+		local luasnip = require("luasnip")
+
+		require("luasnip/loaders/from_vscode").lazy_load()
+
+		cmp.setup({
+			snippet = {
+				expand = function(args)
+					luasnip.lsp_expand(args.body)
+				end,
+			},
+			mapping = cmp.mapping.preset.insert({
+				["&ltC-k&gt"] = cmp.mapping.select_prev_item(),
+				["&ltC-j&gt"] = cmp.mapping.select_next_item(),
+				["&ltC-d&gt"] = cmp.mapping.scroll_docs(-4),
+				["&ltC-f&gt"] = cmp.mapping.scroll_docs(4),
+				["&ltCR&gt"] = cmp.mapping.confirm({
+					behavior = cmp.ConfirmBehavior.Replace,
+					select = false,
+				}),
+				["&ltTab&gt"] = cmp.mapping(function(fallback)
+					if cmp.visible() then
+						cmp.select_next_item()
+					elseif luasnip.expand_or_jumpable() then
+						luasnip.expand_or_jump()
+					else
+						fallback()
+					end
+				end, { "i", "s" }),
+				["&ltS-Tab&gt"] = cmp.mapping(function(fallback)
+					if cmp.visible() then
+						cmp.select_prev_item()
+					elseif luasnip.jumpable(-1) then
+						luasnip.jump(-1)
+					else
+						fallback()
+					end
+				end, { "i", "s" }),
+			}),
+			formatting = {
+				fields = { "kind", "abbr", "menu" },
+				format = function(entry, vim_item)
+					-- Kind icons
+					vim_item.kind = string.format("%s", kind_icons[vim_item.kind])
+					vim_item.menu = ({
+						nvim_lsp = "[LSP]",
+						luasnip = "[Snippet]",
+						buffer = "[Buffer]",
+						path = "[Path]",
+					})[entry.source.name]
+					return vim_item
+				end,
+			},
+			sources = {
+				{ name = "nvim_lsp" },
+				{ name = "luasnip" },
+				{ name = "buffer" },
+				{ name = "path" },
+			},
+			window = {
+				completion = cmp.config.window.bordered(),
+				documentation = cmp.config.window.bordered(),
+			},
+		})
+	end,
+}</code></pre>
+			<p>This plugin has dependencies, so we have so specify them. <a href="https://github.com/hrsh7th/cmp-path">cmp-path</a>, for example, is for path  completion, so when we write a route of our filesystem, like <q>/home/leliel/</q>, it autocompletes with the files and directories inside that directory.</p>
+      <p>The config function of this one is a little bigger, but it's just as simple. We <a href="https://en.wikipedia.org/wiki/Lazy_loading">lazy load</a> <a href="https://github.com/L3MON4D3/LuaSnip">LuaSnip</a>, a snippet engine (a program that generates code snippets for various programming languages), and then we call cmp's setup function, passing it an object with:</p>
+      <ul>
+        <li>A snippet attribute, in which we call LuaSnip to generate the snippets.</li>
+        <li>A mapping attribute, defining various key bindings. (e.g. ctrl + j/k for going up and down in the cmp window)</li>
+        <li>A formatting attribute, defining the format of the entries in the cmp window. (e.g. the entries's suffixes)</li>
+        <li>Finally, but not limited to: A window attribute, defining the appearance of the cmp window. (e.g. bordered)</li>
+		</div>
+    <hr>
+    <footer>
+			<ul>
+				<li><label for="git"><img src="../img/git.svg" width="16px"> Git Repository:</label> <em id="git"><a href="https://github.com/leliel-git">leliel-git</a></em></li>
+				<li><label for="monero"><img src="../img/monero.png" width="16px"> Monero:</label> <em id="monero">46QkSV2WdMjYr8DbL5BkuTQxC1ySTgcq5EZ6aHS8bWEfUXdVLH5WWhcFbfoaNpGxrbgGc9AeYPew7QczFXR95wy5QKBzbCZ</em></li>
+				<li><label for="xmpp">&#x1F517 XMPP:</label> <em id="xmpp">leliel@xmpp.earth</em></li>
+				<li><label for="email">&#x1F517 Email:</label> <em id="email">mail.leliel@proton.me</em></li>
+			</ul>
+			<marquee direction="right">
+				<a href="https://getmonero.org"><img src="../img/we-monero-white.png" alt="we love monero"></a>
+				<a href="https://neovim.io"><img src="../img/neovim.png" alt="made with neovim"></a>
+			</marquee>
+		</footer>
+	</body>
+</html>

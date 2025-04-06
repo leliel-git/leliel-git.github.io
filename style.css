@@ -44,3 +44,13 @@ marquee > a > img
 {
 	height: 64px;
 }
+
+pre
+{
+	font-size: 16px;
+	overflow: auto;
+	padding: 16px;
+	background-color: #f8f8f8;
+	border: 1px solid #ddd;
+	white-space: pre-wrap;
+}
